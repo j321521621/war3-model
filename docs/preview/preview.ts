@@ -150,13 +150,13 @@ function handleLoadedTexture(): void {
     }
 }
 
-/* function parseModel(isBinary: boolean, xhr: XMLHttpRequest): Model {
+function parseModel(isBinary: boolean, xhr: XMLHttpRequest): Model {
     if (isBinary) {
         return parseMDX(xhr.response as ArrayBuffer);
     } else {
         return parseMDL(xhr.responseText);
     }
-} */
+}
 
 function processModelLoading() {
     console.log(model);
@@ -170,19 +170,20 @@ function processModelLoading() {
     setAnimationList();
 }
 
-/* function setSampleTextures () {
-    for (let texture of model.Textures) {
-        if (texture.Image) {
-            ++totalTextures;
-            loadTexture(texture.Image, texture.Image, texture.Flags);
-        }
-    }
-} */
 
-/* function loadModel () {
+function getUrlParam(name, url = window.location.href) {
+    name = name.replace(/[\[\]]/g, '\\$&');
+    var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)'),
+        results = regex.exec(url);
+    if (!results) return null;
+    if (!results[2]) return '';
+    return decodeURIComponent(results[2].replace(/\+/g, ' '));
+}
+
+
+function ajax(url, OnReady, isBinary : boolean = false) {
     const xhr = new XMLHttpRequest();
-    const file = 'preview/Footman.mdl';
-    const isBinary = file.indexOf('.mdx') > -1;
+    const file = url;
 
     if (isBinary) {
         xhr.responseType = 'arraybuffer';
@@ -191,20 +192,58 @@ function processModelLoading() {
     xhr.open('GET', file, true);
     xhr.onreadystatechange = () => {
         if (xhr.status === 200 && xhr.readyState === XMLHttpRequest.DONE) {
-            model = parseModel(isBinary, xhr);
-            processModelLoading();
-            setSampleTextures();
+            OnReady(xhr)
         }
     };
     xhr.send();
-} */
+}
+
+function loadModel (file : string) {
+    file = file.toLowerCase()
+    console.log('load model ' + file)
+    if(file.indexOf('.mdx') > -1){
+        const url = ('/mpq/merge/' + file.replace('\\', '/'))
+        ajax(url, (xhr) => {
+            model = parseModel(true, xhr);
+            processModelLoading();
+            setSampleTextures();
+            setDragDropTextures();
+        }, true)
+    }
+
+}
+
+function setSampleTextures () {
+    for (let texture of model.Textures) {
+        if (texture.Image) {
+            console.log('load texture ' + texture.Image)
+            if(texture.Image.toLowerCase().indexOf('.blp') > -1){
+                const url = ('/mpq/merge/' + texture.Image.replace('\\', '/')).toLowerCase()
+                ajax(url, (xhr) => {
+                    const blp = decode(xhr.response as ArrayBuffer);
+                    console.log(texture.Image, blp);
+        
+                    modelRenderer.setTextureImageData(
+                        texture.Image,
+                        blp.mipmaps.map((_mipmap, i) => getImageData(blp, i)),
+                        texture.Flags,
+                    );
+                }, true)
+                handleLoadedTexture()
+            }
+        }
+    }
+} 
 
 function init() {
     canvas = document.getElementById('canvas') as HTMLCanvasElement;
     initControls();
     initCameraMove();
     initDragDrop();
-    // loadModel();
+    const modelpath = getUrlParam('model')
+    if(modelpath){
+        loadModel(modelpath);
+    }
     updateCanvasSize();
     window.addEventListener('resize', updateCanvasSize);
 }
@@ -300,7 +339,7 @@ function initCameraMove() {
         (document.getElementById('distance') as HTMLInputElement).value = String(cameraDistance);
     }
 
-    function pointerDown(event: PointerEvent) {
+    function pointerDown(event) {
         if (event.target !== canvas || event.button) {
             return;
         }
@@ -451,9 +490,9 @@ function initDragDrop() {
             }
         }
     });
-    container.addEventListener('dragover', function onDragLeave(event: DragEvent) {
+    container.addEventListener('dragover', function onDragLeave(event) {
         event.preventDefault();
-        event.dataTransfer.dropEffect = 'copy';
+        (event as DragEvent).dataTransfer.dropEffect = 'copy';
     });
     const dropModel = (file, textures) => {
         const reader = new FileReader();
@@ -571,7 +610,7 @@ function initDragDrop() {
             }
         });
     };
-    container.addEventListener('drop', function onDrop(event: DragEvent) {
+    container.addEventListener('drop', function onDrop(event) {
         event.preventDefault();
         container.classList.remove('container_drag');
         container.classList.add('container_custom');
@@ -580,7 +619,7 @@ function initDragDrop() {
         }
         dropTarget.classList.remove('drag_hovered');
 
-        const files = event.dataTransfer.files;
+        const files = (event as DragEvent).dataTransfer.files;
         if (!files || !files.length) {
             return;
         }

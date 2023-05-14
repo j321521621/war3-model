@@ -20,7 +20,6 @@ with open('preview_all.html', 'w') as fout:
           content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>MDL/MDX Previewer</title>
-    <link rel="stylesheet" type="text/css" href="preview.css">
     <style>
         .menu{ 
             float:left;
@@ -30,7 +29,27 @@ with open('preview_all.html', 'w') as fout:
             overflow-y:auto;
             overflow-x:hidden;
         }
-        .view{ float:left;width:59%;height:99%;border:1px solid #000} 
+        .view{ 
+            float:left;
+            width:59%;
+            height:99%;
+            border:1px solid #000
+        } 
+
+    html, body {
+        height: 100%;
+    }
+
+    body {
+        margin: 0;
+        font: 16px sans-serif;
+        touch-action: none;
+    }
+
+    canvas {
+        display: block;
+        flex: 1 1 auto;
+    }
     </style>
 </head>
 <body>

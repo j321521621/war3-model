@@ -221,7 +221,6 @@ function setSampleTextures () {
                 const url = ('/mpq/merge/' + texture.Image.replace('\\', '/')).toLowerCase()
                 ajax(url, (xhr) => {
                     const blp = decode(xhr.response as ArrayBuffer);
-                    console.log(texture.Image, blp);
         
                     modelRenderer.setTextureImageData(
                         texture.Image,
@@ -535,7 +534,6 @@ function initDragDrop() {
                         const array = reader.result as ArrayBuffer;
                         const dds = parseHeaders(array);
 
-                        console.log(dds);
 
                         let format: GLenum;
 
@@ -578,7 +576,6 @@ function initDragDrop() {
                     } else if (isBLP) {
                         const blp = decode(reader.result as ArrayBuffer);
 
-                        console.log(file.name, blp);
 
                         modelRenderer.setTextureImageData(
                             textureName,
@@ -590,7 +587,6 @@ function initDragDrop() {
                         const img = new Image();
 
                         img.onload = () => {
-                            console.log(file.name, img);
                             modelRenderer.setTextureImage(textureName, img, textureFlags);
                             resolve();
                         };

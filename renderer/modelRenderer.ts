@@ -450,6 +450,7 @@ export class ModelRenderer {
 
 
         for (let i = 0; i < this.model.Geosets.length; ++i) {
+            if(i != 1) continue
             const geoset = this.model.Geosets[i];
             if (this.rendererData.geosetAlpha[i] < 1e-6) {
                 continue;
@@ -464,7 +465,7 @@ export class ModelRenderer {
             const material = this.model.Materials[materialID];
 
             for (let j = 0; j < material.Layers.length; ++j) {
-                this.setLayerProps(material.Layers[j], this.rendererData.materialLayerTextureID[materialID][j]);
+                this.setLayerProps(material.Layers[j], this.rendererData.materialLayerTextureID[materialID][j], wireframe);
 
                 this.gl.bindBuffer(this.gl.ARRAY_BUFFER, this.vertexBuffer[i]);
                 this.gl.vertexAttribPointer(this.shaderProgramLocations.vertexPositionAttribute, 3, this.gl.FLOAT, false, 0, 0);
@@ -857,7 +858,7 @@ export class ModelRenderer {
         return interpRes;
     }
 
-    private setLayerProps (layer: Layer, textureID: number): void {
+    private setLayerProps (layer: Layer, textureID: number, wireframe : boolean): void {
         const texture = this.model.Textures[textureID];
 
         if (layer.Shading & LayerShading.TwoSided) {
@@ -909,12 +910,17 @@ export class ModelRenderer {
             this.gl.depthMask(false);
         }
 
-        if (texture.Image) {
+        if(wireframe){
+            this.gl.uniform3fv(this.shaderProgramLocations.replaceableColorUniform, this.rendererData.teamColor);
+            this.gl.uniform1f(this.shaderProgramLocations.replaceableTypeUniform, 1);
+        }
+        else if (texture.Image) {
             this.gl.activeTexture(this.gl.TEXTURE0);
             this.gl.bindTexture(this.gl.TEXTURE_2D, this.rendererData.textures[texture.Image]);
             this.gl.uniform1i(this.shaderProgramLocations.samplerUniform, 0);
             this.gl.uniform1f(this.shaderProgramLocations.replaceableTypeUniform, 0);
         } else if (texture.ReplaceableId === 1 || texture.ReplaceableId === 2) {
+            console.log()
             this.gl.uniform3fv(this.shaderProgramLocations.replaceableColorUniform, this.rendererData.teamColor);
             this.gl.uniform1f(this.shaderProgramLocations.replaceableTypeUniform, texture.ReplaceableId);
         }
